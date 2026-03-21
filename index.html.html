@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PARA Task Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0e0f;--sf:#161618;--sf2:#1e1e21;--br:rgba(255,255,255,.08);--br2:rgba(255,255,255,.14);--tx:#f0f0f0;--mt:#888;--dm:#555;--inbox:#3b82f6;--projects:#ef4444;--areas:#10b981;--resources:#f59e0b;}
+[data-theme=light]{--bg:#f5f5f0;--sf:#fff;--sf2:#f0f0eb;--br:rgba(0,0,0,.08);--br2:rgba(0,0,0,.14);--tx:#1a1a1a;--mt:#666;--dm:#aaa;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;-webkit-user-select:none;user-select:none;}
+/* allow text select inside modals */
+.modal{-webkit-user-select:text;user-select:text;}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--br);background:var(--sf);position:sticky;top:0;z-index:50;gap:8px;flex-wrap:wrap;}
+.hl{display:flex;align-items:center;gap:10px;}
+.logo{font-size:16px;font-weight:700;}.logo span{color:var(--projects);}
+.seg{display:flex;border:1px solid var(--br2);border-radius:8px;overflow:hidden;}
+.sb{padding:5px 11px;font-size:11px;font-family:'Syne',sans-serif;font-weight:600;background:transparent;border:none;color:var(--mt);cursor:pointer;transition:background .12s,color .12s;}
+.sb.active{background:var(--sf2);color:var(--tx);}
+.hr{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.cfl{display:none;}.cfl.show{display:flex;}
+.cex{display:none;align-items:center;gap:7px;}.cex.show{display:flex;}
+.ibtn{width:29px;height:29px;border-radius:7px;border:1px solid var(--br2);background:transparent;color:var(--mt);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.ibtn:hover{color:var(--tx);background:var(--sf2);}
+.gsel{padding:4px 8px;border-radius:7px;border:1px solid var(--br2);background:var(--sf);color:var(--tx);font-family:'Syne',sans-serif;font-size:11px;cursor:pointer;outline:none;}
+.gsel option{background:var(--sf);}
+
+/* Board */
+#bv{display:grid;grid-template-columns:268px 1fr 1fr 1fr;height:calc(100vh - 52px);overflow:hidden;}
+.col{border-right:1px solid var(--br);display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;}
+.col:last-child{border-right:none;}
+.ch{padding:12px 12px 8px;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.ct{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.cdot{width:7px;height:7px;border-radius:50%;}
+.cc{font-size:10px;padding:1px 5px;border-radius:8px;background:var(--sf2);color:var(--mt);font-family:'DM Mono',monospace;}
+.ch-right{display:flex;align-items:center;gap:5px;}
+.cs{padding:2px 5px;font-size:10px;font-family:'Syne',sans-serif;background:transparent;border:1px solid var(--br);border-radius:5px;color:var(--dm);cursor:pointer;outline:none;}
+.cs option{background:var(--sf);}
+/* Quick filter chips */
+.qf{display:flex;gap:4px;padding:5px 9px;border-bottom:1px solid var(--br);flex-shrink:0;flex-wrap:wrap;}
+.qfchip{font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--br2);background:transparent;color:var(--mt);cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;}
+.qfchip.active{background:var(--sf2);color:var(--tx);}
+.cb{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.cb::-webkit-scrollbar{width:3px;}
+.cb::-webkit-scrollbar-thumb{background:var(--br2);border-radius:4px;}
+/* Drop highlight on col-body */
+.cb.drop-hl{outline:2px dashed var(--br2);outline-offset:-3px;border-radius:6px;background:rgba(255,255,255,.02);}
+
+/* Inbox input */
+.ii{padding:8px;border-bottom:1px solid var(--br);flex-shrink:0;}
+.ii>input{width:100%;padding:7px 10px;font-size:13px;font-family:'Syne',sans-serif;background:var(--sf2);border:1px solid var(--br2);border-radius:8px;color:var(--tx);outline:none;}
+.ii>input:focus{border-color:var(--inbox);}
+.ii>input::placeholder{color:var(--dm);}
+.xbtn{margin-top:4px;width:100%;padding:4px;background:none;border:1px dashed var(--br2);border-radius:6px;color:var(--dm);font-size:10px;font-family:'Syne',sans-serif;cursor:pointer;}
+.xbtn:hover{color:var(--mt);background:var(--sf2);}
+.xf{margin-top:6px;display:none;flex-direction:column;gap:4px;}
+.xf.show{display:flex;}
+.xf textarea,.xf select{width:100%;padding:6px 8px;font-size:12px;font-family:'Syne',sans-serif;background:var(--sf2);border:1px solid var(--br);border-radius:6px;color:var(--tx);outline:none;resize:none;}
+.xf select option{background:var(--sf);}
+.fr{display:flex;gap:4px;}.fr>*{flex:1;}
+/* Dual date: text + picker icon */
+.dw{display:flex;}
+.dw input[type=text]{flex:1;padding:6px 8px;font-size:12px;font-family:'Syne',sans-serif;background:var(--sf2);border:1px solid var(--br);border-radius:6px 0 0 6px;color:var(--tx);outline:none;min-width:0;}
+.dw input[type=date]{width:26px;padding:0 2px;background:var(--sf2);border:1px solid var(--br);border-left:none;border-radius:0 6px 6px 0;color:var(--tx);outline:none;cursor:pointer;color-scheme:dark;}
+[data-theme=light] .dw input[type=date]{color-scheme:light;}
+.dw input[type=date]::-webkit-calendar-picker-indicator{padding:5px 2px;filter:invert(.5);cursor:pointer;}
+.sp{display:none;}.sp.show{display:block;}
+.abtn{padding:7px;background:var(--inbox);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;}
+.abtn:hover{opacity:.85;}
+
+/* Cards */
+.card{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:8px 10px;cursor:pointer;position:relative;}
+.card:hover{border-color:var(--br2);}
+.card.dragging{opacity:.3;pointer-events:none;}
+.dh{display:inline-block;color:var(--dm);font-size:14px;margin-right:5px;cursor:grab;touch-action:none;}
+.dh:active{cursor:grabbing;}
+.ctit{font-size:13px;font-weight:500;line-height:1.4;}
+.chk{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--br2);background:transparent;cursor:pointer;flex-shrink:0;margin-top:1px;appearance:none;-webkit-appearance:none;}
+.chk:checked{background:var(--projects);border-color:var(--projects);}
+.cm{margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;}
+.tag{font-size:10px;font-family:'DM Mono',monospace;padding:2px 5px;border-radius:3px;font-weight:500;}
+.tdl{background:rgba(239,68,68,.12);color:#f87171;}
+.tfr{background:rgba(16,185,129,.12);color:#34d399;}
+.tnt{background:var(--sf2);color:var(--mt);}
+.tiss{background:rgba(139,92,246,.15);color:#a78bfa;}
+.cdel{position:absolute;top:7px;right:7px;display:none;width:18px;height:18px;border-radius:3px;border:none;background:var(--sf2);color:var(--mt);cursor:pointer;font-size:9px;align-items:center;justify-content:center;line-height:1;}
+.card:hover .cdel{display:flex;}
+.wt{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:7px;padding:7px 10px;font-size:11px;color:#f87171;margin-bottom:5px;}
+.empty{text-align:center;padding:16px 8px;color:var(--dm);font-size:11px;}
+
+/* Drag ghost */
+#ghost{position:fixed;pointer-events:none;z-index:9999;background:var(--sf);border:1px solid var(--projects);border-radius:8px;padding:7px 12px;font-size:12px;font-family:'Syne',sans-serif;color:var(--tx);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9;box-shadow:0 6px 24px rgba(0,0,0,.5);display:none;}
+
+/* Modals */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;}
+.ov.show{display:flex;}
+.modal{background:var(--sf);border:1px solid var(--br2);border-radius:14px;padding:20px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:12px;}
+.ef{margin-bottom:9px;}.el{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mt);margin-bottom:3px;}
+.ef input[type=text],.ef select,.ef textarea{width:100%;padding:8px 10px;font-size:13px;font-family:'Syne',sans-serif;background:var(--sf2);border:1px solid var(--br);border-radius:7px;color:var(--tx);outline:none;resize:none;}
+.ef input[type=text]:focus,.ef select:focus,.ef textarea:focus{border-color:var(--inbox);}
+.ef select option{background:var(--sf);}
+.er{display:flex;gap:8px;}.er .ef{flex:1;}
+/* Dual date in modal */
+.mdw{display:flex;}
+.mdw input[type=text]{flex:1;padding:8px 10px;font-size:13px;font-family:'Syne',sans-serif;background:var(--sf2);border:1px solid var(--br);border-radius:7px 0 0 7px;color:var(--tx);outline:none;}
+.mdw input[type=text]:focus{border-color:var(--inbox);}
+.mdw input[type=date]{width:30px;padding:0 3px;background:var(--sf2);border:1px solid var(--br);border-left:none;border-radius:0 7px 7px 0;color:var(--tx);outline:none;cursor:pointer;color-scheme:dark;}
+[data-theme=light] .mdw input[type=date]{color-scheme:light;}
+.mdw input[type=date]::-webkit-calendar-picker-indicator{padding:7px 3px;filter:invert(.5);cursor:pointer;}
+.crw{font-size:11px;color:var(--dm);margin-top:3px;font-family:'DM Mono',monospace;}
+.sbtn{width:100%;padding:8px;background:var(--inbox);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;margin-top:5px;}
+.sbtn:hover{opacity:.85;}
+.dc{display:none;margin-top:10px;padding:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;}
+.dc.show{display:block;}
+.dc p{font-size:12px;color:#f87171;margin-bottom:8px;}
+.dcb{display:flex;gap:6px;}
+.dcb button{flex:1;padding:6px;border-radius:7px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--br2);}
+.dcb .cn{background:transparent;color:var(--mt);}
+.dcb .cy{background:var(--projects);border-color:var(--projects);color:#fff;}
+
+/* Calendar */
+#cv{display:none;padding:16px;overflow-y:auto;height:calc(100vh - 52px);}
+.cbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.cnav{display:flex;align-items:center;gap:6px;}
+.cnav button{width:26px;height:26px;border-radius:6px;border:1px solid var(--br2);background:var(--sf);color:var(--tx);cursor:pointer;font-size:12px;}
+.cnav button:hover{background:var(--sf2);}
+.ctit2{font-size:15px;font-weight:700;min-width:150px;}
+.tbtn{padding:4px 10px;border-radius:7px;border:1px solid var(--br2);background:transparent;color:var(--mt);font-family:'Syne',sans-serif;font-size:11px;cursor:pointer;}
+.tbtn:hover{background:var(--sf2);color:var(--tx);}
+.cw{border:1px solid var(--br);border-radius:10px;overflow:hidden;}
+.chs{display:grid;background:var(--sf2);}
+.chd{padding:6px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--mt);text-align:center;border-right:1px solid var(--br);}
+.chd:last-child{border-right:none;}
+.cg{display:grid;}
+.cc2{background:var(--sf);padding:5px;min-height:82px;border-right:1px solid var(--br);border-bottom:1px solid var(--br);overflow:hidden;cursor:pointer;}
+.cc2:hover{background:var(--sf2);}
+.cc2.dim{opacity:.3;background:var(--bg);}
+.cc2.tdc{background:rgba(59,130,246,.06);}
+.dn{font-size:10px;font-family:'DM Mono',monospace;color:var(--mt);margin-bottom:2px;font-weight:500;}
+.tdc .dn{width:18px;height:18px;background:var(--inbox);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.cevg{display:grid;grid-template-columns:1fr 1fr;gap:2px;}
+.cev{font-size:9px;padding:2px 3px;border-radius:3px;font-weight:500;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cev.projects{background:rgba(239,68,68,.18);color:#f87171;}
+.cev.areas{background:rgba(16,185,129,.18);color:#34d399;}
+.mb2{font-size:9px;color:var(--dm);font-family:'DM Mono',monospace;}
+.wg{display:grid;gap:6px;}
+.wd{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:8px;min-height:120px;cursor:pointer;}
+.wd:hover{background:var(--sf2);}
+.wd.tdc2{border-color:rgba(59,130,246,.4);}
+.wdn{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--mt);text-align:center;margin-bottom:3px;}
+.wdd{font-size:18px;font-weight:700;text-align:center;margin-bottom:6px;}
+.tdc2 .wdd{color:var(--inbox);}
+.yg{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;}
+.ym{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:9px;}
+.ymt{font-size:11px;font-weight:700;margin-bottom:6px;}
+.ymg{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.ymh{font-size:8px;color:var(--dm);text-align:center;font-weight:600;padding:1px 0;}
+.ymd{font-size:9px;font-family:'DM Mono',monospace;text-align:center;padding:2px 1px;border-radius:3px;color:var(--mt);position:relative;cursor:pointer;}
+.ymd:hover{background:var(--sf2);}
+.ymd.hev{color:var(--tx);font-weight:700;}
+.ymd.tod{background:var(--inbox);color:#fff;border-radius:50%;}
+.ymd.om{opacity:.2;cursor:default;}
+.edot{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;}
+
+/* Areas pattern view */
+.pv{display:flex;flex-direction:column;gap:9px;}
+.pr{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:11px 13px;}
+.prt{font-size:12px;font-weight:600;margin-bottom:5px;color:var(--areas);}
+.pcs{display:flex;flex-wrap:wrap;gap:5px;}
+.pc{font-size:11px;font-family:'DM Mono',monospace;padding:3px 9px;border-radius:16px;background:rgba(16,185,129,.12);color:#34d399;font-weight:500;cursor:pointer;}
+.pc:hover{background:rgba(16,185,129,.22);}
+
+/* Day expand modal */
+.dmc{max-height:65vh;overflow-y:auto;}
+.dcc{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
+.dcct{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;}
+.dci{padding:6px 8px;border-radius:7px;border:1px solid var(--br);font-size:12px;margin-bottom:4px;cursor:pointer;}
+.dci:hover{background:var(--sf2);}
+.dci.projects{border-left:2px solid var(--projects);}
+.dci.areas{border-left:2px solid var(--areas);}
+.dit{font-weight:500;margin-bottom:1px;}
+.dim2{font-size:10px;color:var(--mt);font-family:'DM Mono',monospace;}
+
+/* ── MOBILE ─────────────────────────────────────── */
+@media(max-width:700px){
+  /* Header compact */
+  header{padding:8px 12px;gap:6px;}
+  .logo{font-size:15px;}
+  .sb{padding:4px 9px;font-size:10px;}
+  .ibtn{width:26px;height:26px;font-size:12px;}
+  .gsel{font-size:10px;padding:4px 6px;}
+
+  /* Board: single column, hide all but active, full height */
+  #bv{display:block;height:calc(100vh - 52px - 56px);overflow:hidden;}
+  .col{display:none;height:100%;border-right:none;border-bottom:none;}
+  .col.mob-active{display:flex;}
+
+  /* Calendar full height */
+  #cv{height:calc(100vh - 52px - 56px);padding:12px;}
+
+  /* Bottom tab bar */
+  #mob-tabs{display:flex;position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--sf);border-top:1px solid var(--br2);z-index:100;}
+  .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;color:var(--mt);cursor:pointer;font-family:'Syne',sans-serif;font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:0;}
+  .mob-tab.active{color:var(--tx);}
+  .mob-tab-icon{font-size:18px;line-height:1;}
+  .mob-tab-dot{width:6px;height:6px;border-radius:50%;margin-bottom:1px;}
+
+  /* Yearly mini grid: 2 cols */
+  .yg{grid-template-columns:repeat(2,1fr);}
+  /* Day modal: single col */
+  .dcc{grid-template-columns:1fr;}
+  /* Quick filter chips wrap nicely */
+  .qf{padding:4px 8px;}
+  /* Cards slightly bigger tap targets */
+  .card{padding:10px 12px;}
+  .ctit{font-size:14px;}
+}
+@media(min-width:701px){#mob-tabs{display:none;}}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+<div class="hl">
+  <div class="logo">PARA<span>.</span></div>
+  <div class="seg" id="wsseg">
+    <button class="sb active" onclick="setWS('personal')">Personal</button>
+    <button class="sb" onclick="setWS('work')">Work</button>
+  </div>
+</div>
+<div class="hr">
+  <div class="seg">
+    <button class="sb active" id="vbb" onclick="sView('board')">Board</button>
+    <button class="sb" id="vbc" onclick="sView('cal')">Calendar</button>
+  </div>
+  <div class="seg cfl" id="cfl">
+    <button class="sb active" onclick="setCF('both')">Both</button>
+    <button class="sb" onclick="setCF('projects')">Projects</button>
+    <button class="sb" onclick="setCF('areas')">Areas</button>
+  </div>
+  <div class="cex" id="cex">
+    <select class="gsel" id="gran" onchange="rCal()">
+      <option value="d5">Daily (Mon–Fri)</option>
+      <option value="d7">Daily (7 days)</option>
+      <option value="wk">Weekly</option>
+      <option value="bw">Bi-weekly</option>
+      <option value="mo" selected>Monthly</option>
+      <option value="qt">Quarterly</option>
+      <option value="by">Bi-yearly</option>
+      <option value="yr">Yearly</option>
+    </select>
+  </div>
+  <button class="ibtn" onclick="expT()" title="Export">↓</button>
+  <label class="ibtn" title="Import" style="cursor:pointer">↑<input type="file" accept=".json" onchange="impT(event)" style="display:none"></label>
+  <button class="ibtn" onclick="togTheme()" id="tbtn">☀</button>
+</div>
+</header>
+
+<div id="bv">
+  <!-- INBOX -->
+  <div class="col">
+    <div class="ch"><div class="ct"><div class="cdot" style="background:var(--inbox)"></div>Inbox</div><span class="cc" id="ci">0</span></div>
+    <div class="ii" id="iia">
+      <input id="qt" placeholder="Capture a task…" onkeydown="if(event.key==='Enter')addT()">
+      <button class="xbtn" id="xbtn" onclick="togXF(event)">+ More details</button>
+      <div class="xf" id="xf">
+        <textarea id="fd" placeholder="Description (optional)" rows="2"></textarea>
+        <div class="fr">
+          <div class="dw"><input type="text" id="fdl" placeholder="Deadline dd/mm/yyyy" onchange="syncT2P('fdl','fdlp')"><input type="date" id="fdlp" onchange="syncP2T('fdlp','fdl')"></div>
+          <div class="dw"><input type="text" id="fed" placeholder="End date dd/mm/yyyy" onchange="syncT2P('fed','fedp')"><input type="date" id="fedp" onchange="syncP2T('fedp','fed')"></div>
+        </div>
+        <select id="ffr" onchange="oFr('f')">
+          <option value="">No frequency</option>
+          <option value="d5">Daily (Mon–Fri)</option><option value="d7">Daily (7 days)</option>
+          <option value="wk">Weekly</option><option value="bw">Bi-weekly</option>
+          <option value="mo">Monthly</option><option value="qt">Quarterly</option>
+          <option value="by">Bi-yearly</option><option value="yr">Yearly</option>
+        </select>
+        <select id="fwd" class="sp"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select>
+        <select id="fmd" class="sp"></select>
+        <div id="fmmd" class="sp" style="display:none;flex-direction:column;gap:4px;">
+          <div class="fr"><select id="fmm"></select><select id="fmmd2"></select></div>
+        </div>
+        <select id="fiss"><option value="">Status (optional)</option><option value="issued">Issued</option></select>
+        <button class="abtn" onclick="addT()">Add to Inbox</button>
+      </div>
+    </div>
+    <div class="cb" id="tb-inbox"></div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="col">
+    <div class="ch">
+      <div class="ct"><div class="cdot" style="background:var(--projects)"></div>Projects</div>
+      <div class="ch-right">
+        <select class="cs" id="sp" onchange="rAll()"><option value="">All</option><option value="alpha">A–Z</option><option value="deadline">Due date</option></select>
+        <span class="cc" id="cp">0</span>
+      </div>
+    </div>
+    <div class="qf">
+      <button class="qfchip" id="qf-p-all" onclick="setQF('p','all')">All</button>
+      <button class="qfchip" id="qf-p-week" onclick="setQF('p','week')">This week</button>
+      <button class="qfchip" id="qf-p-month" onclick="setQF('p','month')">This month</button>
+      <button class="qfchip" id="qf-p-quarter" onclick="setQF('p','quarter')">This quarter</button>
+      <button class="qfchip" id="qf-p-year" onclick="setQF('p','year')">This year</button>
+    </div>
+    <div class="cb" id="tb-projects"></div>
+  </div>
+
+  <!-- AREAS -->
+  <div class="col">
+    <div class="ch">
+      <div class="ct"><div class="cdot" style="background:var(--areas)"></div>Areas</div>
+      <div class="ch-right">
+        <select class="cs" id="sa" onchange="rAll()"><option value="">All</option><option value="alpha">A–Z</option><option value="freq">Frequency</option></select>
+        <span class="cc" id="ca">0</span>
+      </div>
+    </div>
+    <div class="qf">
+      <button class="qfchip" id="qf-a-all" onclick="setQF('a','all')">All</button>
+      <button class="qfchip" id="qf-a-week" onclick="setQF('a','week')">Weekly</button>
+      <button class="qfchip" id="qf-a-bw" onclick="setQF('a','bw')">Bi-weekly</button>
+      <button class="qfchip" id="qf-a-month" onclick="setQF('a','month')">Monthly</button>
+      <button class="qfchip" id="qf-a-quarter" onclick="setQF('a','quarter')">Quarterly</button>
+      <button class="qfchip" id="qf-a-year" onclick="setQF('a','year')">Yearly</button>
+    </div>
+    <div class="cb" id="tb-areas"></div>
+  </div>
+
+  <!-- RESOURCES -->
+  <div class="col">
+    <div class="ch">
+      <div class="ct"><div class="cdot" style="background:var(--resources)"></div>Resources</div>
+      <div class="ch-right">
+        <select class="cs" id="sr" onchange="rAll()"><option value="">Newest</option><option value="oldest">Oldest</option><option value="alpha">A–Z</option></select>
+        <span class="cc" id="cr">0</span>
+      </div>
+    </div>
+    <div class="cb" id="tb-resources"></div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div id="cv">
+  <div class="cbar">
+    <div class="cnav" id="cnav">
+      <button onclick="cNav(-1)">&#8592;</button>
+      <div class="ctit2" id="ctit"></div>
+      <button onclick="cNav(1)">&#8594;</button>
+    </div>
+    <button class="tbtn" id="todaybtn" onclick="goToday()">Today</button>
+  </div>
+  <div id="cc3"></div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="ov" id="dm" onclick="oClick(event,'dm')">
+<div class="modal" onclick="event.stopPropagation()">
+  <h3>Edit task</h3>
+  <div id="ew"></div>
+  <div class="ef"><div class="el">Title</div><input type="text" id="et"></div>
+  <div class="ef"><div class="el">Description</div><textarea id="edesc" rows="2"></textarea></div>
+  <div class="er">
+    <div class="ef"><div class="el">Workspace</div><select id="ews"><option value="personal">Personal</option><option value="work">Work</option></select></div>
+    <div class="ef"><div class="el">Column</div><select id="ec" onchange="oEC()"><option value="inbox">Inbox</option><option value="projects">Projects</option><option value="areas">Areas</option><option value="resources">Resources</option></select></div>
+  </div>
+  <div class="er">
+    <div class="ef"><div class="el">Deadline (dd/mm/yyyy)</div><div class="mdw"><input type="text" id="edl" placeholder="dd/mm/yyyy" onchange="syncT2P('edl','edlp')"><input type="date" id="edlp" onchange="syncP2T('edlp','edl')"></div></div>
+    <div class="ef"><div class="el">End date (dd/mm/yyyy)</div><div class="mdw"><input type="text" id="eed" placeholder="dd/mm/yyyy" onchange="syncT2P('eed','eedp')"><input type="date" id="eedp" onchange="syncP2T('eedp','eed')"></div></div>
+  </div>
+  <div class="ef"><div class="el">Frequency</div>
+    <select id="efr" onchange="oFr('e')">
+      <option value="">No frequency</option>
+      <option value="d5">Daily (Mon–Fri)</option><option value="d7">Daily (7 days)</option>
+      <option value="wk">Weekly</option><option value="bw">Bi-weekly</option>
+      <option value="mo">Monthly</option><option value="qt">Quarterly</option>
+      <option value="by">Bi-yearly</option><option value="yr">Yearly</option>
+    </select>
+  </div>
+  <div class="ef" id="ewd-f" style="display:none"><div class="el">Day of week</div><select id="ewd"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></div>
+  <div class="ef" id="emd-f" style="display:none"><div class="el">Day of month</div><select id="emd"></select></div>
+  <div class="ef" id="emmd-f" style="display:none"><div class="el">Month &amp; Day</div><div class="er"><div class="ef" style="margin:0"><select id="emm"></select></div><div class="ef" style="margin:0"><select id="emmd"></select></div></div></div>
+  <div class="ef"><div class="el">Status</div><select id="eiss"><option value="">None</option><option value="issued">Issued</option></select></div>
+  <div class="crw" id="ecr"></div>
+  <button class="sbtn" onclick="sEdit()">Save changes</button>
+  <div style="margin-top:9px;text-align:center;"><button style="background:none;border:none;color:var(--dm);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif;" onclick="sDC()">Delete this task…</button></div>
+  <div class="dc" id="dc2">
+    <p>Are you sure? This cannot be undone.</p>
+    <div class="dcb"><button class="cn" onclick="hDC()">Cancel</button><button class="cy" onclick="cDel()">Yes, delete</button></div>
+  </div>
+</div>
+</div>
+
+<!-- DAY MODAL -->
+<div class="ov" id="daym" onclick="oClick(event,'daym')">
+<div class="modal" onclick="event.stopPropagation()" style="width:500px;">
+  <h3 id="daymt"></h3>
+  <div class="dmc"><div class="dcc">
+    <div><div class="dcct" style="color:var(--projects)">Projects</div><div id="dayp"></div></div>
+    <div><div class="dcct" style="color:var(--areas)">Areas</div><div id="daya"></div></div>
+  </div></div>
+</div>
+</div>
+
+<div id="ghost"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+var tasks=[],detId=null,cDate=new Date(),xExp=false,db=null,WS='personal',CF='both';
+var qfP='all',qfA='all'; // quick filters
+var dragging=false,dragId=null,dragCard=null;
+var GRAN_KEY='para_gran_v5';
+var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MNA=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var FLBL={d5:'Daily (Mon–Fri)',d7:'Daily (7 days)',wk:'Weekly',bw:'Bi-weekly',mo:'Monthly',qt:'Quarterly',by:'Bi-yearly',yr:'Yearly'};
+var FO={d5:0,d7:1,wk:2,bw:3,mo:4,qt:5,by:6,yr:7};
+
+// ── Freq migration: normalize old freq codes to new short codes ──
+var FREQ_MAP={'daily5':'d5','daily7':'d7','weekly5':'d5','weekly7':'d7','weekly':'wk','biweekly':'bw','monthly':'mo','quarterly':'qt','biyearly':'by','yearly':'yr'};
+function normTask(t){if(t.freq&&FREQ_MAP[t.freq])t.freq=FREQ_MAP[t.freq];return t;}
+
+
+function initDB(){return new Promise(function(res,rej){var r=indexedDB.open('para_db',7);r.onupgradeneeded=function(e){var d=e.target.result;if(!d.objectStoreNames.contains('tasks'))d.createObjectStore('tasks',{keyPath:'id'});};r.onsuccess=function(e){db=e.target.result;res();};r.onerror=function(){rej(r.error);};});}
+function sav(){if(!db)return;var tx=db.transaction('tasks','readwrite'),s=tx.objectStore('tasks');s.clear();tasks.forEach(function(t){s.put(t);});}
+function loadDB(){return new Promise(function(res){if(!db){res([]);return;}var tx=db.transaction('tasks','readonly'),r=tx.objectStore('tasks').getAll();r.onsuccess=function(){res((r.result||[]).map(normTask));};r.onerror=function(){res([]);};});}
+function expT(){var b=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='para-backup.json';a.click();}
+function impT(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var i=JSON.parse(ev.target.result);if(Array.isArray(i)){tasks=i.map(normTask);sav();rAll();alert('Imported '+i.length+' tasks.');}}catch(ex){alert('Invalid file.');}};r.readAsText(f);}
+
+// ── Date helpers ──────────────────────────────────────
+function pDate(s){if(!s)return'';s=s.trim();var m=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);if(!m)return'';var d=parseInt(m[1]),mo=parseInt(m[2]),y=parseInt(m[3]);if(mo<1||mo>12||d<1||d>31)return'';return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function i2d(iso){if(!iso)return'';var p=iso.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:'';}
+function fmtD(iso){if(!iso)return'';var d=new Date(iso+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function syncP2T(pid,tid){var v=document.getElementById(pid).value;if(v){var p=v.split('-');document.getElementById(tid).value=p[2]+'/'+p[1]+'/'+p[0];}}
+function syncT2P(tid,pid){var iso=pDate(document.getElementById(tid).value);if(iso)document.getElementById(pid).value=iso;}
+
+// ── Theme ────────────────────────────────────────────
+function togTheme(){var d=document.body.dataset.theme==='dark';document.body.dataset.theme=d?'light':'dark';document.getElementById('tbtn').textContent=d?'☽':'☀';localStorage.setItem('para_theme',document.body.dataset.theme);}
+
+// ── Workspace ─────────────────────────────────────────
+function setWS(w){WS=w;document.querySelectorAll('#wsseg .sb').forEach(function(b){b.classList.toggle('active',b.textContent.toLowerCase()===w);});rAll();if(document.getElementById('cv').style.display!=='none')rCal();}
+
+// ── Cal filter ───────────────────────────────────────
+function setCF(f){CF=f;document.querySelectorAll('#cfl .sb').forEach(function(b){b.classList.toggle('active',(f==='both'&&b.textContent==='Both')||b.textContent.toLowerCase()===f);});rCal();}
+
+// ── Quick filters ────────────────────────────────────
+function setQF(col,val){
+  if(col==='p'){qfP=val;['all','week','month','quarter','year'].forEach(function(v){var el=document.getElementById('qf-p-'+v);if(el)el.classList.toggle('active',v===val);});}
+  else{qfA=val;['all','week','bw','month','quarter','year'].forEach(function(v){var el=document.getElementById('qf-a-'+v);if(el)el.classList.toggle('active',v===val);});}
+  rAll();
+}
+function getWeekRange(){var now=new Date();now.setHours(0,0,0,0);var d=now.getDay(),mon=new Date(now);mon.setDate(now.getDate()-(d===0?6:d-1));var sun=new Date(mon);sun.setDate(mon.getDate()+6);return{start:dsf(mon),end:dsf(sun)};}
+function getMonthRange(){var now=new Date();var y=now.getFullYear(),m=now.getMonth();return{start:dsf(new Date(y,m,1)),end:dsf(new Date(y,m+1,0))};}
+function getQuarterRange(){var now=new Date();var y=now.getFullYear(),qm=Math.floor(now.getMonth()/3)*3;return{start:dsf(new Date(y,qm,1)),end:dsf(new Date(y,qm+3,0))};}
+function getYearRange(){var y=new Date().getFullYear();return{start:y+'-01-01',end:y+'-12-31'};}
+
+// ── View switch ──────────────────────────────────────
+function sView(v){
+  if(window.innerWidth<=700){if(v==='board')mobTab(mobActive==='cal'?'inbox':mobActive);else mobTab('cal');return;}
+  document.getElementById('bv').style.display=v==='board'?'grid':'none';
+  document.getElementById('cv').style.display=v==='cal'?'block':'none';
+  document.getElementById('cfl').classList.toggle('show',v==='cal');
+  document.getElementById('cex').classList.toggle('show',v==='cal');
+  document.getElementById('vbb').classList.toggle('active',v==='board');
+  document.getElementById('vbc').classList.toggle('active',v==='cal');
+  if(v==='cal')rCal();
+}
+
+// ── Populate selects ──────────────────────────────────
+function popMS(sel,withBlank){sel.innerHTML=withBlank?'<option value="">Month</option>':'';MN.forEach(function(m,i){var o=document.createElement('option');o.value=i+1;o.textContent=m;sel.appendChild(o);});}
+function popDS(sel,withBlank){sel.innerHTML=withBlank?'<option value="">Day</option>':'';for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;sel.appendChild(o);}}
+function ensureSels(){var ids=[['fmm',true],['fmmd2',true],['emm',true],['emmd',true],['fmd',false],['emd',false]];ids.forEach(function(p){var el=document.getElementById(p[0]);if(el&&!el.options.length){if(p[0].includes('mm')&&!p[0].includes('d2')&&!p[0].includes('d')&&p[0]!=='emmd')popMS(el,p[1]);else if(p[0]==='fmm'||p[0]==='emm')popMS(el,p[1]);else if(p[0]==='fmmd2'||p[0]==='emmd')popDS(el,p[1]);else popDS(el,p[1]);}});}
+// simpler
+function ensureAll(){
+  function pMS(id){var el=document.getElementById(id);if(el&&!el.options.length)popMS(el,true);}
+  function pDS(id,b){var el=document.getElementById(id);if(el&&!el.options.length)popDS(el,b);}
+  pMS('fmm');pMS('emm');pDS('fmmd2',true);pDS('emmd',true);pDS('fmd',false);pDS('emd',false);
+}
+
+// ── Inbox form ────────────────────────────────────────
+function togXF(e){e.stopPropagation();xExp=!xExp;document.getElementById('xf').classList.toggle('show',xExp);document.getElementById('xbtn').textContent=xExp?'- Less':'+ More details';if(xExp){ensureAll();setTimeout(function(){document.addEventListener('click',outXF);},0);}}
+function outXF(e){if(!document.getElementById('iia').contains(e.target)){xExp=false;document.getElementById('xf').classList.remove('show');document.getElementById('xbtn').textContent='+ More details';document.removeEventListener('click',outXF);}}
+
+function oFr(pfx){
+  var f=document.getElementById(pfx==='f'?'ffr':'efr').value;
+  var isWk=f==='wk'||f==='bw',isMo=f==='mo',isLg=f==='qt'||f==='by'||f==='yr';
+  if(pfx==='f'){
+    document.getElementById('fwd').classList.toggle('show',isWk);
+    document.getElementById('fmd').classList.toggle('show',isMo);
+    var fmmd=document.getElementById('fmmd');fmmd.style.display=isLg?'flex':'none';
+  }else{
+    document.getElementById('ewd-f').style.display=isWk?'block':'none';
+    document.getElementById('emd-f').style.display=isMo?'block':'none';
+    document.getElementById('emmd-f').style.display=isLg?'block':'none';
+    oEC();
+  }
+}
+
+function addT(){
+  var title=document.getElementById('qt').value.trim();if(!title)return;
+  var f=document.getElementById('ffr').value,isLg=f==='qt'||f==='by'||f==='yr';
+  tasks.push({id:Date.now().toString(),title:title,
+    desc:document.getElementById('fd').value.trim(),
+    deadline:pDate(document.getElementById('fdl').value),
+    endDate:pDate(document.getElementById('fed').value),
+    freq:f,weekday:document.getElementById('fwd').value,
+    monthday:isLg?document.getElementById('fmmd2').value:document.getElementById('fmd').value,
+    freqMonth:isLg?document.getElementById('fmm').value:'',
+    issued:document.getElementById('fiss').value,
+    column:'inbox',workspace:WS,created:new Date().toISOString()});
+  sav();
+  ['qt','fd','fdl','fdlp','fed','fedp'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('ffr').value='';document.getElementById('fiss').value='';
+  ['fwd','fmd'].forEach(function(id){document.getElementById(id).classList.remove('show');});
+  document.getElementById('fmmd').style.display='none';
+  rAll();
+}
+
+// ── Render board ──────────────────────────────────────
+function vt(){return tasks.filter(function(t){return t.workspace===WS;});}
+
+function applySort(col,list){
+  var sel=document.getElementById(col==='p'?'sp':col==='a'?'sa':'sr');
+  if(!sel)return list;var s=sel.value;
+  return list.slice().sort(function(a,b){
+    if(s==='alpha')return a.title.localeCompare(b.title);
+    if(s==='deadline')return(a.deadline||'9999').localeCompare(b.deadline||'9999');
+    if(s==='freq')return(FO[a.freq]||99)-(FO[b.freq]||99);
+    if(s==='oldest')return new Date(a.created)-new Date(b.created);
+    return new Date(b.created)-new Date(a.created);// newest default
+  });
+}
+
+function applyQF(col,list){
+  if(col==='projects'){
+    if(qfP==='all')return list;
+    var r=qfP==='week'?getWeekRange():qfP==='month'?getMonthRange():qfP==='quarter'?getQuarterRange():getYearRange();
+    return list.filter(function(t){return t.deadline&&t.deadline>=r.start&&t.deadline<=r.end;}).sort(function(a,b){return(a.deadline||'').localeCompare(b.deadline||'');});
+  }
+  if(col==='areas'){
+    if(qfA==='all')return list;
+    var freqMap={week:'wk',bw:'bw',month:'mo',quarter:'qt',year:'yr'};
+    var freq=freqMap[qfA]||qfA;
+    return list.filter(function(t){return t.freq===freq;});
+  }
+  return list;
+}
+
+function rAll(){
+  rCol('inbox');rCol('projects');rCol('areas');rCol('resources');
+}
+
+function rCol(col){
+  var body=document.getElementById('tb-'+col);
+  body.innerHTML='';
+  var raw=vt().filter(function(t){return t.column===col;});
+  var mapped={'inbox':'i','projects':'p','areas':'a','resources':'r'};
+  var sk=mapped[col];
+  var list=col==='inbox'?raw:applyQF(col,applySort(sk,raw));
+  if(!list.length){var e=document.createElement('div');e.className='empty';e.textContent=col==='inbox'?'Add a task above':'Drop tasks here';body.appendChild(e);}
+  list.forEach(function(t){body.appendChild(mkCard(t,col));});
+  var cids={inbox:'ci',projects:'cp',areas:'ca',resources:'cr'};
+  document.getElementById(cids[col]).textContent=raw.length;
+}
+
+function fStr(t){
+  if(!t.freq)return'';
+  var s=FLBL[t.freq]||t.freq;
+  if((t.freq==='wk'||t.freq==='bw')&&t.weekday!=='')s+=' · '+DAYS[parseInt(t.weekday)];
+  else if(t.freq==='mo'&&t.monthday)s+=' · day '+t.monthday;
+  else if((t.freq==='qt'||t.freq==='by'||t.freq==='yr')){if(t.freqMonth)s+=' · '+MNA[parseInt(t.freqMonth)-1];if(t.monthday)s+=' '+t.monthday;}
+  return s;
+}
+
+function mkCard(t,col){
+  var card=document.createElement('div');card.className='card';card.dataset.id=t.id;
+  var isI=col==='inbox';var fs=fStr(t);
+  var html='<div style="display:flex;align-items:flex-start;gap:5px;">';
+  if(isI)html+='<input type="checkbox" class="chk">';
+  html+='<span class="ctit">'+esc(t.title)+'</span></div>';
+  html+='<div class="cm" style="margin-top:4px;padding-left:'+(isI?'22px':'0')+'">';
+  if(t.deadline)html+='<span class="tag tdl">Due '+fmtD(t.deadline)+'</span>';
+  if(fs)html+='<span class="tag tfr">'+esc(fs)+'</span>';
+  if(t.issued==='issued')html+='<span class="tag tiss">Issued</span>';
+  if(t.endDate)html+='<span class="tag tnt">ends '+fmtD(t.endDate)+'</span>';
+  if(t.desc)html+='<span class="tag tnt">note</span>';
+  html+='</div><button class="cdel">✕</button>';
+  card.innerHTML=html;
+
+  if(isI){card.querySelector('.chk').addEventListener('change',function(e){e.stopPropagation();card.style.transition='opacity .3s';card.style.opacity='0';setTimeout(function(){tasks=tasks.filter(function(x){return x.id!==t.id;});sav();rAll();},300);});}
+  card.querySelector('.cdel').addEventListener('click',function(e){e.stopPropagation();aDel(t.id);});
+
+  // Whole card: click = open edit, drag = move
+  // We distinguish by how far the pointer moves before mouseup
+  card.addEventListener('pointerdown',function(e){
+    if(e.target.classList.contains('chk')||e.target.classList.contains('cdel'))return;
+    if(e.button!==0)return;
+    e.preventDefault();
+    dragId=t.id;dragCard=card;dragging=false;
+    var sx=e.clientX,sy=e.clientY;
+    var g=document.getElementById('ghost');
+    function onMove(mv){
+      if(!dragging&&(Math.abs(mv.clientX-sx)>6||Math.abs(mv.clientY-sy)>6)){
+        dragging=true;card.classList.add('dragging');g.textContent=t.title;g.style.display='block';
+      }
+      if(dragging){
+        g.style.left=(mv.clientX+12)+'px';g.style.top=(mv.clientY+6)+'px';
+        document.querySelectorAll('.cb').forEach(function(cb){
+          var r=cb.getBoundingClientRect();
+          var over=mv.clientX>=r.left&&mv.clientX<=r.right&&mv.clientY>=r.top&&mv.clientY<=r.bottom;
+          cb.classList.toggle('drop-hl',over);
+        });
+      }
+    }
+    function onUp(mv){
+      document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp);
+      g.style.display='none';
+      document.querySelectorAll('.cb').forEach(function(cb){cb.classList.remove('drop-hl');});
+      if(dragging&&dragId){
+        card.classList.remove('dragging');
+        var dropped=null;
+        ['inbox','projects','areas','resources'].forEach(function(c){
+          var cb=document.getElementById('tb-'+c);var r=cb.getBoundingClientRect();
+          if(mv.clientX>=r.left&&mv.clientX<=r.right&&mv.clientY>=r.top&&mv.clientY<=r.bottom)dropped=c;
+        });
+        if(dropped){
+          var tk=tasks.find(function(x){return x.id===dragId;});
+          if(tk&&tk.column!==dropped&&vDrop(dragId,dropped)){tk.column=dropped;sav();rAll();}
+        }
+      }else if(!dragging){
+        // was a click — open edit
+        oDet(t.id);
+      }
+      dragging=false;dragId=null;dragCard=null;
+    }
+    document.addEventListener('pointermove',onMove);document.addEventListener('pointerup',onUp);
+  });
+
+  return card;
+}
+
+function vDrop(id,col){
+  var t=tasks.find(function(x){return x.id===id;});if(!t)return true;
+  if(col==='projects'&&!t.deadline){sWarn('projects','Projects require a deadline.');return false;}
+  if(col==='areas'&&!t.freq){sWarn('areas','Areas require a frequency.');return false;}
+  return true;
+}
+function sWarn(col,msg){var c=document.getElementById('tb-'+col);var w=c.querySelector('.wt');if(!w){w=document.createElement('div');w.className='wt';c.insertBefore(w,c.firstChild);}w.textContent=msg;setTimeout(function(){if(w.parentNode)w.parentNode.removeChild(w);},3500);}
+
+// ── Edit modal ────────────────────────────────────────
+function aDel(id){oDet(id);setTimeout(function(){sDC();},40);}
+function sDC(){document.getElementById('dc2').classList.add('show');}
+function hDC(){document.getElementById('dc2').classList.remove('show');}
+function cDel(){tasks=tasks.filter(function(x){return x.id!==detId;});sav();rAll();document.getElementById('dm').classList.remove('show');detId=null;}
+
+function oDet(id){
+  detId=id;var t=tasks.find(function(x){return x.id===id;});if(!t)return;
+  ensureAll();
+  document.getElementById('ew').innerHTML='';
+  document.getElementById('et').value=t.title;
+  document.getElementById('edesc').value=t.desc||'';
+  document.getElementById('ews').value=t.workspace||'personal';
+  document.getElementById('ec').value=t.column;
+  document.getElementById('edl').value=i2d(t.deadline);document.getElementById('edlp').value=t.deadline||'';
+  document.getElementById('eed').value=i2d(t.endDate);document.getElementById('eedp').value=t.endDate||'';
+  document.getElementById('efr').value=t.freq||'';
+  document.getElementById('ewd').value=t.weekday||'1';
+  document.getElementById('emd').value=t.monthday||'';
+  document.getElementById('emm').value=t.freqMonth||'';
+  document.getElementById('emmd').value=t.monthday||'';
+  document.getElementById('eiss').value=t.issued||'';
+  oFr('e');
+  document.getElementById('ecr').textContent='Created: '+new Date(t.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  hDC();document.getElementById('dm').classList.add('show');
+}
+function oEC(){
+  var col=document.getElementById('ec').value,dl=document.getElementById('edl').value,fr=document.getElementById('efr').value,w=document.getElementById('ew');
+  if(col==='projects'&&!pDate(dl))w.innerHTML='<div class="wt">Projects must have a deadline.</div>';
+  else if(col==='areas'&&!fr)w.innerHTML='<div class="wt">Areas must have a frequency.</div>';
+  else w.innerHTML='';
+}
+function sEdit(){
+  var t=tasks.find(function(x){return x.id===detId;});if(!t)return;
+  var nc=document.getElementById('ec').value,ndl=pDate(document.getElementById('edl').value),nfr=document.getElementById('efr').value;
+  if(nc==='projects'&&!ndl){document.getElementById('ew').innerHTML='<div class="wt">Add a deadline before moving to Projects.</div>';return;}
+  if(nc==='areas'&&!nfr){document.getElementById('ew').innerHTML='<div class="wt">Add a frequency before moving to Areas.</div>';return;}
+  var isLg=nfr==='qt'||nfr==='by'||nfr==='yr';
+  t.title=document.getElementById('et').value.trim()||t.title;
+  t.desc=document.getElementById('edesc').value.trim();
+  t.workspace=document.getElementById('ews').value;
+  t.column=nc;t.deadline=ndl;
+  t.endDate=pDate(document.getElementById('eed').value);
+  t.freq=nfr;t.weekday=document.getElementById('ewd').value;
+  t.monthday=isLg?document.getElementById('emmd').value:document.getElementById('emd').value;
+  t.freqMonth=isLg?document.getElementById('emm').value:'';
+  t.issued=document.getElementById('eiss').value;
+  sav();rAll();document.getElementById('dm').classList.remove('show');detId=null;
+}
+function oClick(e,id){if(e.target===document.getElementById(id)){document.getElementById(id).classList.remove('show');if(id==='dm')detId=null;}}
+
+// ── Calendar nav ──────────────────────────────────────
+function goToday(){cDate=new Date();rCal();}
+function cNav(d){
+  var g=document.getElementById('gran').value;
+  if(g==='d5'||g==='d7')cDate.setDate(cDate.getDate()+d);
+  else if(g==='wk')cDate.setDate(cDate.getDate()+d*7);
+  else if(g==='bw')cDate.setDate(cDate.getDate()+d*14);
+  else if(g==='mo')cDate.setMonth(cDate.getMonth()+d);
+  else if(g==='qt')cDate.setMonth(cDate.getMonth()+d*3);
+  else if(g==='by')cDate.setMonth(cDate.getMonth()+d*6);
+  else cDate.setFullYear(cDate.getFullYear()+d);
+  rCal();
+}
+
+// ── Calendar filter ───────────────────────────────────
+function ftTasks(){
+  var f=vt();
+  if(CF==='projects')return f.filter(function(t){return t.column==='projects';});
+  if(CF==='areas')return f.filter(function(t){return t.column==='areas';});
+  return f.filter(function(t){return t.column==='projects'||t.column==='areas';});
+}
+function bMap(rs,re){var m={};ftTasks().forEach(function(t){getOcc(t,rs,re).forEach(function(d){if(!m[d])m[d]=[];m[d].push(t);});});return m;}
+
+// ── Calendar render ───────────────────────────────────
+function rCal(){
+  var g=document.getElementById('gran').value;
+  var cont=document.getElementById('cc3'),title=document.getElementById('ctit');
+  var today=new Date();today.setHours(0,0,0,0);
+  var showNav=true;
+
+  // Areas = pattern view (no exact dates)
+  if(CF==='areas'){
+    showNav=false;
+    rAreasPat(g,cont,title);
+    document.getElementById('cnav').style.display='none';
+    document.getElementById('todaybtn').style.display='none';
+    return;
+  }
+  document.getElementById('cnav').style.display='flex';
+  document.getElementById('todaybtn').style.display='';
+
+  if(g==='yr'){
+    title.textContent=cDate.getFullYear().toString();
+    var rs=new Date(cDate.getFullYear(),0,1),re=new Date(cDate.getFullYear(),11,31);
+    var map=bMap(rs,re);cont.innerHTML='';
+    var yg=document.createElement('div');yg.className='yg';
+    for(var m=0;m<12;m++){
+      var md=document.createElement('div');md.className='ym';
+      var mt=document.createElement('div');mt.className='ymt';mt.textContent=MN[m];md.appendChild(mt);
+      var mg=document.createElement('div');mg.className='ymg';
+      ['M','T','W','T','F','S','S'].forEach(function(h){var d=document.createElement('div');d.className='ymh';d.textContent=h;mg.appendChild(d);});
+      var fi=new Date(cDate.getFullYear(),m,1),sp=fi.getDay()===0?6:fi.getDay()-1,ld=new Date(cDate.getFullYear(),m+1,0).getDate();
+      for(var i=0;i<sp;i++){var d=document.createElement('div');d.className='ymd om';mg.appendChild(d);}
+      for(var i=1;i<=ld;i++){
+        (function(day){var d=document.createElement('div');d.className='ymd';var date=new Date(cDate.getFullYear(),m,day),dstr=dsf(date),evs=map[dstr]||[];
+        if(date.getTime()===today.getTime())d.classList.add('tod');if(evs.length)d.classList.add('hev');d.textContent=day;
+        if(evs.length&&!d.classList.contains('tod')){var dot=document.createElement('div');dot.className='edot';dot.style.background=evs.some(function(x){return x.column==='projects';})?'var(--projects)':'var(--areas)';d.appendChild(dot);}
+        d.onclick=function(){oDayModal(date,evs);};mg.appendChild(d);})(i);
+      }
+      md.appendChild(mg);yg.appendChild(md);
+    }
+    cont.appendChild(yg);return;
+  }
+
+  // Build day list
+  var days=[];
+  function addMonth(y,mo){var fi=new Date(y,mo,1),sp=fi.getDay()===0?6:fi.getDay()-1,ld=new Date(y,mo+1,0).getDate();for(var i=-sp;i<0;i++)days.push({d:new Date(y,mo,1+i),o:true});for(var i=1;i<=ld;i++)days.push({d:new Date(y,mo,i),o:false});while(days.length%7!==0){var la=days[days.length-1].d,nd=new Date(la);nd.setDate(nd.getDate()+1);days.push({d:nd,o:true});}}
+  if(g==='d5'){var d=new Date(cDate);var wd=d.getDay();if(wd===0)d.setDate(d.getDate()+1);else if(wd===6)d.setDate(d.getDate()+2);days=[{d:d,o:false}];title.textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+  else if(g==='d7'){days=[{d:new Date(cDate),o:false}];title.textContent=cDate.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+  else if(g==='wk'){var mon=new Date(cDate);var wd=mon.getDay();mon.setDate(mon.getDate()-(wd===0?6:wd-1));for(var i=0;i<7;i++){var d=new Date(mon);d.setDate(d.getDate()+i);days.push({d:d,o:false});}title.textContent=fmtD(dsf(days[0].d))+' – '+fmtD(dsf(days[6].d));}
+  else if(g==='bw'){var mon=new Date(cDate);var wd=mon.getDay();mon.setDate(mon.getDate()-(wd===0?6:wd-1));for(var i=0;i<14;i++){var d=new Date(mon);d.setDate(d.getDate()+i);days.push({d:d,o:false});}title.textContent=fmtD(dsf(days[0].d))+' – '+fmtD(dsf(days[13].d));}
+  else if(g==='mo'){addMonth(cDate.getFullYear(),cDate.getMonth());title.textContent=new Date(cDate.getFullYear(),cDate.getMonth(),1).toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
+  else if(g==='qt'){var qm=Math.floor(cDate.getMonth()/3)*3;for(var i=0;i<3;i++)addMonth(cDate.getFullYear(),qm+i);title.textContent='Q'+(Math.floor(cDate.getMonth()/3)+1)+' '+cDate.getFullYear();}
+  else if(g==='by'){var half=cDate.getMonth()<6?0:6;for(var i=0;i<6;i++)addMonth(cDate.getFullYear(),half+i);title.textContent=(half===0?'Jan–Jun':'Jul–Dec')+' '+cDate.getFullYear();}
+
+  var isSingle=g==='d5'||g==='d7';
+  var cols=isSingle?1:7;
+  var rs=days[0].d,re=days[days.length-1].d;
+  var map=bMap(rs,re);
+  cont.innerHTML='';var wrap=document.createElement('div');wrap.className='cw';
+  if(!isSingle){var hs=document.createElement('div');hs.className='chs';hs.style.gridTemplateColumns='repeat(7,1fr)';['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(h){var d=document.createElement('div');d.className='chd';d.textContent=h;hs.appendChild(d);});wrap.appendChild(hs);}
+  var gr=document.createElement('div');gr.className='cg';gr.style.gridTemplateColumns='repeat('+cols+',1fr)';
+  days.forEach(function(item){
+    var d=item.d,o=item.o;
+    var cell=document.createElement('div');cell.className='cc2';
+    if(o)cell.classList.add('dim');if(d.getTime()===today.getTime())cell.classList.add('tdc');
+    var dn=document.createElement('div');dn.className='dn';dn.textContent=isSingle?d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}):d.getDate();cell.appendChild(dn);
+    var evs=map[dsf(d)]||[],show=evs.slice(0,6),extra=evs.length-6;
+    if(show.length){var eg=document.createElement('div');eg.className='cevg';show.forEach(function(t){var ev=document.createElement('div');ev.className='cev '+t.column;ev.textContent=t.title.length>12?t.title.substring(0,10)+'…':t.title;ev.title=t.title;ev.onclick=function(e2){e2.stopPropagation();oDet(t.id);};eg.appendChild(ev);});cell.appendChild(eg);}
+    if(extra>0){var mb=document.createElement('div');mb.className='mb2';mb.textContent='+'+extra+' more';cell.appendChild(mb);}
+    cell.onclick=function(){oDayModal(d,evs);};
+    gr.appendChild(cell);
+  });
+  wrap.appendChild(gr);cont.appendChild(wrap);
+}
+
+// ── Areas calendar: real grid, no exact year ──────────
+// Weekly: Mon-Sun columns, tasks shown in their repeat day
+// Monthly: 1-31 grid, tasks shown in their repeat day-of-month
+// Others: pattern chip view
+function rAreasPat(g,cont,title){
+  var areaTasks=vt().filter(function(t){return t.column==='areas'&&t.freq;});
+  cont.innerHTML='';
+
+  if(g==='wk'||g==='bw'){
+    // Calendar grid: 7 day columns, no specific date, just weekday
+    title.textContent='Areas — '+(g==='wk'?'weekly':'bi-weekly')+' schedule';
+    var dayNames=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    var dayKeys=[1,2,3,4,5,6,0];// Mon=1...Sun=0
+    var wrap=document.createElement('div');wrap.className='cw';
+    // Headers
+    var hs=document.createElement('div');hs.className='chs';hs.style.gridTemplateColumns='repeat(7,1fr)';
+    dayNames.forEach(function(n){var h=document.createElement('div');h.className='chd';h.textContent=n.substring(0,3);hs.appendChild(h);});
+    wrap.appendChild(hs);
+    // Single row of day cells
+    var gr=document.createElement('div');gr.className='cg';gr.style.gridTemplateColumns='repeat(7,1fr)';
+    dayKeys.forEach(function(wd){
+      var cell=document.createElement('div');cell.className='cc2';cell.style.minHeight='120px';
+      var freqs=g==='wk'?['wk']:['bw','wk'];
+      var matching=areaTasks.filter(function(t){return freqs.indexOf(t.freq)!==-1&&parseInt(t.weekday)===wd;});
+      if(matching.length){
+        var eg=document.createElement('div');eg.style.display='flex';eg.style.flexDirection='column';eg.style.gap='3px';
+        matching.forEach(function(t){
+          var ev=document.createElement('div');ev.className='cev areas';ev.style.fontSize='10px';ev.style.padding='3px 5px';ev.style.whiteSpace='normal';ev.style.cursor='pointer';
+          ev.textContent=t.title;ev.onclick=function(){oDet(t.id);};eg.appendChild(ev);
+        });
+        cell.appendChild(eg);
+      }
+      gr.appendChild(cell);
+    });
+    wrap.appendChild(gr);cont.appendChild(wrap);
+    return;
+  }
+
+  if(g==='mo'){
+    // Calendar grid: 1-31 days in 7-column layout
+    title.textContent='Areas — monthly schedule';
+    var wrap=document.createElement('div');wrap.className='cw';
+    var hs=document.createElement('div');hs.className='chs';hs.style.gridTemplateColumns='repeat(7,1fr)';
+    ['1','2','3','4','5','6','7'].forEach(function(n){var h=document.createElement('div');h.className='chd';h.textContent=n;hs.appendChild(h);});
+    // pad to Mon start... just show days 1-31 in 7 columns
+    wrap.appendChild(hs);
+    var gr=document.createElement('div');gr.className='cg';gr.style.gridTemplateColumns='repeat(7,1fr)';
+    for(var day=1;day<=31;day++){
+      (function(d){
+        var cell=document.createElement('div');cell.className='cc2';cell.style.minHeight='60px';
+        var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
+        var matching=areaTasks.filter(function(t){return t.freq==='mo'&&parseInt(t.monthday)===d;});
+        if(matching.length){
+          var eg=document.createElement('div');eg.style.display='flex';eg.style.flexDirection='column';eg.style.gap='2px';
+          matching.forEach(function(t){var ev=document.createElement('div');ev.className='cev areas';ev.style.fontSize='9px';ev.style.whiteSpace='normal';ev.style.cursor='pointer';ev.textContent=t.title;ev.onclick=function(){oDet(t.id);};eg.appendChild(ev);});
+          cell.appendChild(eg);
+        }
+        gr.appendChild(cell);
+      })(day);
+    }
+    wrap.appendChild(gr);cont.appendChild(wrap);
+    return;
+  }
+
+  // For d5, d7, qt, by, yr — show pattern chip view
+  var subtitles={d5:'every Mon–Fri',d7:'every day',qt:'every quarter',by:'twice a year',yr:'once a year'};
+  var granMap={d5:['d5'],d7:['d5','d7'],qt:['d5','d7','wk','bw','mo','qt'],by:['d5','d7','wk','bw','mo','qt','by'],yr:['d5','d7','wk','bw','mo','qt','by','yr']};
+  var relevant=granMap[g]||Object.keys(FLBL);
+  title.textContent='Areas — recurring schedule';
+  if(!areaTasks.length){cont.innerHTML='<div style="color:var(--dm);font-size:13px;padding:16px;">No recurring area tasks yet. Add tasks to Areas with a frequency set.</div>';return;}
+  var pv=document.createElement('div');pv.className='pv';
+  relevant.forEach(function(freq){
+    var group=areaTasks.filter(function(t){return t.freq===freq;});if(!group.length)return;
+    var row=document.createElement('div');row.className='pr';
+    var rt=document.createElement('div');rt.className='prt';
+    rt.innerHTML=(FLBL[freq]||freq)+' <span style="font-weight:400;color:var(--mt);font-size:11px;">· '+(subtitles[freq]||'')+'</span>';
+    row.appendChild(rt);
+    var pcs=document.createElement('div');pcs.className='pcs';
+    group.forEach(function(t){
+      var chip=document.createElement('div');chip.className='pc';
+      var label=t.title;
+      if(freq==='wk'||freq==='bw')label+=' ('+DAYS[parseInt(t.weekday)||1]+')';
+      else if(freq==='mo'&&t.monthday)label+=' (day '+t.monthday+')';
+      else if((freq==='qt'||freq==='by'||freq==='yr')){if(t.freqMonth)label+=' ('+MNA[parseInt(t.freqMonth)-1];if(t.monthday)label+=' '+t.monthday;if(t.freqMonth)label+=')';}
+      chip.textContent=label;chip.title='Click to edit';chip.onclick=function(){oDet(t.id);};
+      pcs.appendChild(chip);
+    });
+    row.appendChild(pcs);pv.appendChild(row);
+  });
+  cont.appendChild(pv);
+}
+
+// ── Day modal ─────────────────────────────────────────
+function oDayModal(date,evs){
+  if(!evs||!evs.length)return;
+  document.getElementById('daymt').textContent=date.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var proj=evs.filter(function(t){return t.column==='projects';}),area=evs.filter(function(t){return t.column==='areas';});
+  function ri(list,cid){var c=document.getElementById(cid);c.innerHTML='';if(!list.length){c.innerHTML='<div style="color:var(--dm);font-size:12px;">None</div>';return;}list.forEach(function(t){var item=document.createElement('div');item.className='dci '+t.column;item.innerHTML='<div class="dit">'+esc(t.title)+'</div><div class="dim2">'+(t.deadline?'Due '+fmtD(t.deadline):'')+(t.freq?' · '+fStr(t):'')+'</div>';item.onclick=function(){document.getElementById('daym').classList.remove('show');oDet(t.id);};c.appendChild(item);});}
+  ri(proj,'dayp');ri(area,'daya');document.getElementById('daym').classList.add('show');
+}
+
+// ── Occurrences ───────────────────────────────────────
+function getOcc(task,rs,re){
+  var results=[];
+  if(task.deadline){var d=new Date(task.deadline+'T00:00:00');if(d>=rs&&d<=re)results.push(dsf(d));if(!task.freq)return results;}
+  if(!task.freq)return results;
+  var occStart=task.deadline?new Date(task.deadline+'T00:00:00'):(function(){var d=new Date(task.created);d.setHours(0,0,0,0);return d;})();
+  var occEnd=task.endDate?new Date(task.endDate+'T00:00:00'):re;
+  var genStart=occStart>rs?occStart:rs;
+  if(task.freq==='d5'){var d=new Date(genStart);while(d<=occEnd&&d<=re){var wd=d.getDay();if(wd>=1&&wd<=5)results.push(dsf(d));d.setDate(d.getDate()+1);}}
+  else if(task.freq==='d7'){var d=new Date(genStart);while(d<=occEnd&&d<=re){results.push(dsf(d));d.setDate(d.getDate()+1);}}
+  else if(task.freq==='wk'){var td=parseInt(task.weekday)||1;var d=new Date(genStart);while(d.getDay()!==td)d.setDate(d.getDate()+1);while(d<=occEnd&&d<=re){if(d>=rs)results.push(dsf(d));d.setDate(d.getDate()+7);}}
+  else if(task.freq==='bw'){var td=parseInt(task.weekday)||1;var d=new Date(genStart);while(d.getDay()!==td)d.setDate(d.getDate()+1);while(d<=occEnd&&d<=re){if(d>=rs)results.push(dsf(d));d.setDate(d.getDate()+14);}}
+  else{
+    var steps={mo:1,qt:3,by:6,yr:12};var step=steps[task.freq]||1;
+    var md=parseInt(task.monthday)||1;
+    var isLg=task.freq==='qt'||task.freq==='by'||task.freq==='yr';
+    var fm=isLg&&task.freqMonth?parseInt(task.freqMonth)-1:null;
+    var cur;
+    if(fm!==null){cur=new Date(genStart.getFullYear(),fm,md);if(cur<genStart){var stepYr=Math.ceil(step/12);cur.setFullYear(cur.getFullYear()+stepYr);}}
+    else{cur=new Date(genStart.getFullYear(),genStart.getMonth(),md);if(cur<genStart)cur.setMonth(cur.getMonth()+step);}
+    while(cur<=occEnd&&cur<=re){if(cur>=rs)results.push(dsf(cur));if(fm!==null)cur.setFullYear(cur.getFullYear()+Math.ceil(step/12));else cur=new Date(cur.getFullYear(),cur.getMonth()+step,md);}
+  }
+  return results.filter(function(v,i,a){return a.indexOf(v)===i;});
+}
+
+// ── Utils ─────────────────────────────────────────────
+function dsf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Mobile tab switching ──────────────────────────────
+var mobActive='inbox';
+function mobTab(tab){
+  if(window.innerWidth>700)return;
+  mobActive=tab;
+  // update tab buttons
+  ['inbox','projects','areas','resources','cal'].forEach(function(t){
+    var el=document.getElementById('mt-'+t);
+    if(el)el.classList.toggle('active',t===tab);
+  });
+  if(tab==='cal'){
+    document.getElementById('bv').style.display='none';
+    document.getElementById('cv').style.display='block';
+    document.getElementById('cfl').classList.add('show');
+    document.getElementById('cex').classList.add('show');
+    rCal();
+  }else{
+    document.getElementById('bv').style.display='block';
+    document.getElementById('cv').style.display='none';
+    document.getElementById('cfl').classList.remove('show');
+    document.getElementById('cex').classList.remove('show');
+    // show only the active column
+    ['inbox','projects','areas','resources'].forEach(function(c){
+      var col=document.querySelector('#tb-'+c).closest('.col');
+      if(col)col.classList.toggle('mob-active',c===tab);
+    });
+  }
+}
+// init mobile on load
+function initMobile(){
+  if(window.innerWidth<=700){
+    // hide all cols except inbox
+    document.getElementById('vbb').classList.add('active');
+    document.getElementById('vbc').classList.remove('active');
+    mobTab('inbox');
+  }
+}
+
+
+(function(){
+  var t=localStorage.getItem('para_theme');if(t){document.body.dataset.theme=t;document.getElementById('tbtn').textContent=t==='dark'?'☀':'☽';}
+  var g=localStorage.getItem(GRAN_KEY);if(g)document.getElementById('gran').value=g;
+  document.getElementById('gran').addEventListener('change',function(){localStorage.setItem(GRAN_KEY,document.getElementById('gran').value);});
+  // set initial qf chips
+  document.getElementById('qf-p-all').classList.add('active');
+  document.getElementById('qf-a-all').classList.add('active');
+})();
+initDB().then(function(){return loadDB();}).then(function(data){tasks=data;rAll();initMobile();});
+</script>
+<!-- MOBILE BOTTOM TAB BAR -->
+<div id="mob-tabs">
+  <button class="mob-tab active" id="mt-inbox" onclick="mobTab('inbox')">
+    <span class="mob-tab-dot" style="background:var(--inbox)"></span>
+    <span class="mob-tab-icon">📥</span>Inbox
+  </button>
+  <button class="mob-tab" id="mt-projects" onclick="mobTab('projects')">
+    <span class="mob-tab-dot" style="background:var(--projects)"></span>
+    <span class="mob-tab-icon">🎯</span>Projects
+  </button>
+  <button class="mob-tab" id="mt-areas" onclick="mobTab('areas')">
+    <span class="mob-tab-dot" style="background:var(--areas)"></span>
+    <span class="mob-tab-icon">🔄</span>Areas
+  </button>
+  <button class="mob-tab" id="mt-resources" onclick="mobTab('resources')">
+    <span class="mob-tab-dot" style="background:var(--resources)"></span>
+    <span class="mob-tab-icon">📁</span>Resources
+  </button>
+  <button class="mob-tab" id="mt-cal" onclick="mobTab('cal')">
+    <span class="mob-tab-icon">📅</span>Calendar
+  </button>
+</div>
+
+</body>
+</html>
